@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <title>XchaoWill_BF1</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(145deg, #2d3436, #000000);
+      color: #ecf0f1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+    h1 {
+      font-size: 2.5em;
+      margin-bottom: 20px;
+      color: #f1c40f;
+    }
+    button {
+      padding: 15px 30px;
+      background-color: #00cec9;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .card {
+      background-color: #2c3e50;
+      padding: 20px;
+      margin-top: 30px;
+      border-radius: 12px;
+      width: 300px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.5);
+    }
+    .label { font-weight: bold; color: #81ecec; }
+    .value { margin-bottom: 12px; font-size: 18px; }
+  </style>
+</head>
+<body>
+
+  <h1>XchaoWill_BF1</h1>
+  <button onclick="drawWeapon()">抽一次</button>
+  <div class="card" id="resultCard">
+    <div class="value"><span class="label">兵种：</span><span id="className">加载中...</span></div>
+    <div class="value"><span class="label">主武器：</span><span id="primaryWeapon">加载中...</span></div>
+    <div class="value"><span class="label">副武器：</span><span id="secondaryWeapon">加载中...</span></div>
+  </div>
+
+  <script>
+    const apiUrl = "https://api.jsonbin.io/v3/b/681614898a456b796696cf50";
+    const apiKey = "$2a$10$aX/NYN2aSMEpSxVYElN2SOWrTNVqwJMT7k4snGA6W5EbaoLJu96fW";
+
+    const weapons = {
+      "突击兵": ["MP 18", "Automatico M1918", "Hellriegel 1915", "Model 10-A", "M97 Trench Gun"],
+      "医疗兵": ["Cei-Rigotti", "Mondragón", "Selbstlader M1916", "RSC 1917", "Fedorov Avtomat"],
+      "支援兵": ["Lewis Gun", "Madsen MG", "BAR M1918", "Huot Automatic", "Chauchat"],
+      "侦察兵": ["SMLE MKIII", "Gewehr 98", "Russian 1895", "Martini-Henry", "Lebel 1886"]
+    };
+    const secondaryWeapons = [
+      "M1911", "P08 Luger", "C96 Mauser", "Frommer Stop", "Kolibri",
+      "No. 3 Revolver", "Mars Automatic", "Nagant Revolver", "Peacekeeper"
+    ];
+
+    function getRandomItem(arr) {
+      return arr[Math.floor(Math.random() * arr.length)];
+    }
+
+    async function fetchData() {
+      try {
+        const res = await fetch(apiUrl, {
+          headers: { "X-Master-Key": apiKey }
+        });
+        const data = await res.json();
+        const d = data.record;
+        document.getElementById("className").innerText = d.class;
+        document.getElementById("primaryWeapon").innerText = d.primary;
+        document.getElementById("secondaryWeapon").innerText = d.secondary;
+      } catch (err) {
+        alert("读取失败：" + err);
+      }
+    }
+
+    async function drawWeapon() {
+      const classNames = Object.keys(weapons);
+      const selectedClass = getRandomItem(classNames);
+      const selectedPrimary = getRandomItem(weapons[selectedClass]);
+      const selectedSecondary = getRandomItem(secondaryWeapons);
+
+      const payload = {
+        class: selectedClass,
+        primary: selectedPrimary,
+        secondary: selectedSecondary
+      };
+
+      document.getElementById("className").innerText = selectedClass;
+      document.getElementById("primaryWeapon").innerText = selectedPrimary;
+      document.getElementById("secondaryWeapon").innerText = selectedSecondary;
+
+      await fetch(apiUrl, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Master-Key": apiKey
+        },
+        body: JSON.stringify(payload)
+      });
+    }
+
+    fetchData();
+  </script>
+</body>
+</html>
