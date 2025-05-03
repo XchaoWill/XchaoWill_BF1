@@ -11,15 +11,10 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
-      height: 100vh;
+      padding: 20px;
       margin: 0;
     }
-    h1 {
-      font-size: 2.5em;
-      margin-bottom: 20px;
-      color: #f1c40f;
-    }
+    h1 { font-size: 2.5em; margin: 20px 0; color: #f1c40f; }
     button {
       padding: 15px 30px;
       background-color: #00cec9;
@@ -39,16 +34,24 @@
     }
     .label { font-weight: bold; color: #81ecec; }
     .value { margin-bottom: 12px; font-size: 18px; }
+    .history { margin-top: 30px; width: 360px; text-align: left; }
+    .history-item { margin-bottom: 10px; background: #34495e; padding: 10px; border-radius: 6px; }
   </style>
 </head>
 <body>
 
   <h1>XchaoWill_BF1</h1>
   <button onclick="drawWeapon()">抽一次</button>
+
   <div class="card" id="resultCard">
     <div class="value"><span class="label">兵种：</span><span id="className">加载中...</span></div>
     <div class="value"><span class="label">主武器：</span><span id="primaryWeapon">加载中...</span></div>
     <div class="value"><span class="label">副武器：</span><span id="secondaryWeapon">加载中...</span></div>
+  </div>
+
+  <div class="history">
+    <h3>最近抽取记录：</h3>
+    <div id="historyList"></div>
   </div>
 
   <script>
@@ -56,19 +59,50 @@
     const apiKey = "$2a$10$QeC5iky00IoU984rhaI09.8epaSVhf3546TQymU77X8kIU6oiAIfe";
 
     const weapons = {
-      "突击兵": ["MP 18", "Automatico M1918", "Hellriegel 1915", "Model 10-A", "M97 Trench Gun"],
-      "医疗兵": ["Cei-Rigotti", "Mondragón", "Selbstlader M1916", "RSC 1917", "Fedorov Avtomat"],
-      "支援兵": ["Lewis Gun", "Madsen MG", "BAR M1918", "Huot Automatic", "Chauchat"],
-      "侦察兵": ["SMLE MKIII", "Gewehr 98", "Russian 1895", "Martini-Henry", "Lebel 1886"]
+      "突击兵": [
+        "MP 18", "Automatico M1918", "Hellriegel 1915", "Ribeyrolles 1918", "M1917 Trench Carbine",
+        "Maschinenpistole M1912/P.16", "Annihilator", "Model 10-A", "M97 Trench Gun",
+        "12g Automatic", "Sjögren Inertial", "Model 1900"
+      ],
+      "医疗兵": [
+        "Cei-Rigotti", "M1907 SL", "Mondragón", "Autoloading 8 .35", "Selbstlader M1916",
+        "Selbstlader 1906", "RSC 1917", "Fedorov Avtomat", "General Liu Rifle",
+        "Farquhar-Hill", "Howell Automatic"
+      ],
+      "支援兵": [
+        "Lewis Gun", "M1909 Benét–Mercié", "Madsen MG", "MG15 n.A.", "BAR M1918",
+        "Huot Automatic Low Weight", "Chauchat", "Parabellum MG14/17",
+        "Perino Model 1908", "M1917 MG", "LMG 08/18"
+      ],
+      "侦察兵": [
+        "SMLE MKIII", "Russian 1895", "Gewehr 98", "M1903", "Gewehr M.95",
+        "Martini-Henry", "Lawrence of Arabia's SMLE", "Lebel Model 1886",
+        "Mosin-Nagant M91", "Vetterli-Vitali M1870/87", "Type 38 Arisaka",
+        "Carcano M91 Carbine", "Ross MkIII", "M1917 Enfield"
+      ]
     };
 
     const secondaryWeapons = [
-      "M1911", "P08 Luger", "C96 Mauser", "Frommer Stop", "Kolibri",
-      "No. 3 Revolver", "Mars Automatic", "Nagant Revolver", "Peacekeeper"
+      "M1911", "P08 Pistol", "Mle 1903", "C93", "No. 3 Revolver", "Bodeo 1889 Revolver",
+      "Gasser M1870 Revolver", "Kolibri", "Mars Automatic", "Frommer Stop Auto", "Howdah Pistol",
+      "C96", "Repetierpistole M1912", "Obrez Pistol", "Nagant Revolver", "C96 Export",
+      "M1911 Silenced", "Luger P08 Art", "Mle 1903 Extended", "Revolver Mk VI",
+      "C96 Carbine", "P08 Artillerie", "Pieper M1893 Carbine", "Sawed Off Shotgun", "M1911 Extended"
     ];
 
     function getRandomItem(arr) {
       return arr[Math.floor(Math.random() * arr.length)];
+    }
+
+    function updateHistoryUI(history) {
+      const container = document.getElementById("historyList");
+      container.innerHTML = "";
+      history.slice(0, 10).forEach((entry, idx) => {
+        const div = document.createElement("div");
+        div.className = "history-item";
+        div.innerText = `#${idx + 1} 兵种: ${entry.class}, 主武器: ${entry.primary}, 副武器: ${entry.secondary}`;
+        container.appendChild(div);
+      });
     }
 
     async function fetchData() {
@@ -77,42 +111,58 @@
           headers: { "X-Master-Key": apiKey }
         });
         const data = await res.json();
-        const d = data.record;
-        document.getElementById("className").innerText = d.class;
-        document.getElementById("primaryWeapon").innerText = d.primary;
-        document.getElementById("secondaryWeapon").innerText = d.secondary;
+        const history = data.record.history || [];
+        if (history.length > 0) {
+          const latest = history[0];
+          document.getElementById("className").innerText = latest.class;
+          document.getElementById("primaryWeapon").innerText = latest.primary;
+          document.getElementById("secondaryWeapon").innerText = latest.secondary;
+        }
+        updateHistoryUI(history);
       } catch (err) {
         alert("读取失败：" + err);
       }
     }
 
     async function drawWeapon() {
-      const classNames = Object.keys(weapons);
-      const selectedClass = getRandomItem(classNames);
+      const selectedClass = getRandomItem(Object.keys(weapons));
       const selectedPrimary = getRandomItem(weapons[selectedClass]);
       const selectedSecondary = getRandomItem(secondaryWeapons);
 
-      const payload = {
+      const newEntry = {
         class: selectedClass,
         primary: selectedPrimary,
         secondary: selectedSecondary
       };
 
-      document.getElementById("className").innerText = selectedClass;
-      document.getElementById("primaryWeapon").innerText = selectedPrimary;
-      document.getElementById("secondaryWeapon").innerText = selectedSecondary;
+      try {
+        const res = await fetch(apiUrl, {
+          headers: { "X-Master-Key": apiKey }
+        });
+        const data = await res.json();
+        const history = data.record.history || [];
+        const updated = [newEntry, ...history].slice(0, 10);
 
-      await fetch(apiUrl, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Master-Key": apiKey
-        },
-        body: JSON.stringify(payload)
-      });
+        await fetch(apiUrl, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Master-Key": apiKey
+          },
+          body: JSON.stringify({ history: updated })
+        });
+
+        document.getElementById("className").innerText = newEntry.class;
+        document.getElementById("primaryWeapon").innerText = newEntry.primary;
+        document.getElementById("secondaryWeapon").innerText = newEntry.secondary;
+        updateHistoryUI(updated);
+      } catch (err) {
+        alert("抽取失败：" + err);
+      }
     }
 
     fetchData();
   </script>
 </body>
 </html>
+
