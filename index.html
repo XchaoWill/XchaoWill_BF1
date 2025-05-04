@@ -17,12 +17,19 @@
     h1 { font-size: 2.5em; margin: 20px 0; color: #f1c40f; }
     button {
       padding: 15px 30px;
-      background-color: #00cec9;
-      color: white;
+      margin-top: 10px;
       border: none;
       border-radius: 8px;
       font-size: 16px;
       cursor: pointer;
+    }
+    .draw-btn {
+      background-color: #00cec9;
+      color: white;
+    }
+    .clear-btn {
+      background-color: #d63031;
+      color: white;
     }
     .card {
       background-color: #2c3e50;
@@ -41,7 +48,8 @@
 <body>
 
   <h1>XchaoWill_BF1</h1>
-  <button onclick="drawWeapon()">抽一次</button>
+  <button class="draw-btn" onclick="drawWeapon()">抽一次</button>
+  <button class="clear-btn" onclick="clearHistory()">清空历史记录</button>
 
   <div class="card" id="resultCard">
     <div class="value"><span class="label">兵种：</span><span id="className">加载中...</span></div>
@@ -158,6 +166,26 @@
         updateHistoryUI(updated);
       } catch (err) {
         alert("抽取失败：" + err);
+      }
+    }
+
+    async function clearHistory() {
+      if (!confirm("你确定要清空所有历史记录吗？此操作不可恢复！")) return;
+
+      try {
+        await fetch(apiUrl, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Master-Key": apiKey
+          },
+          body: JSON.stringify({ history: [] })
+        });
+
+        alert("历史记录已清空！");
+        location.reload();
+      } catch (err) {
+        alert("清空失败：" + err);
       }
     }
 
